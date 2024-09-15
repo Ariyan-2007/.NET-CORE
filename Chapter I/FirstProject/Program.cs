@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Primitives;
+
 var builder = WebApplication.CreateBuilder(args);
 var app = builder.Build();
 
@@ -5,11 +7,12 @@ var app = builder.Build();
 
 
 // Status Code & Headers & Query
-app.Run(async (HttpContext context) =>
+app.Use(async (HttpContext context, RequestDelegate next) =>
 {
     string path = context.Request.Path;
     string method = context.Request.Method;
     var Query = context.Request.Query;
+
     context.Request.Headers["Content-Type"] = "text/html";
     context.Response.Headers["Server-Details"] = "First Project";
     context.Response.StatusCode = 200;
@@ -24,6 +27,23 @@ app.Run(async (HttpContext context) =>
         }
     }
 
+    await next(context);
+});
+
+
+// HTTP GET | POST
+app.Run(async (HttpContext context) =>
+{
+
+    StreamReader reader = new(context.Request.Body);
+    string body = await reader.ReadToEndAsync();
+    Dictionary<string, StringValues> queryDict = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(body);
+
+    if (queryDict.ContainsKey("firstName"))
+    {
+        string firstName = queryDict["firstName"][0];
+        await context.Response.WriteAsync(firstName);
+    }
 
 });
 
