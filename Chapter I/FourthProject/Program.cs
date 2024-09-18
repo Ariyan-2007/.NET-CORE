@@ -1,4 +1,11 @@
+using RoutingExample.CustomConstraints;
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddRouting(options =>
+{
+    options.ConstraintMap.Add("months", typeof(MonthsCustomConstraint));
+});
+
 var app = builder.Build();
 //Enable Routing
 app.UseRouting();
@@ -36,7 +43,7 @@ app.UseEndpoints(endpoints =>
         await context.Response.WriteAsync(responseMessage);
     });
 
-    endpoints.Map("employee/profile/{EmployeeName}", async (context) =>
+    endpoints.Map("employee/profile/{EmployeeName:minlength(3):alpha=Ariyan}", async (context) =>
     {
 
         // Extract filename and extension from route values
@@ -49,7 +56,7 @@ app.UseEndpoints(endpoints =>
         await context.Response.WriteAsync(responseMessage);
     });
 
-    endpoints.Map("products/details/{id=1}", async (context) =>
+    endpoints.Map("products/details/{id:int:range(1,1000)=1}", async (context) =>
     {
         try
         {
@@ -62,11 +69,37 @@ app.UseEndpoints(endpoints =>
             await context.Response.WriteAsync("Please Provide A Proper Product ID");
         }
     });
+
+    endpoints.Map("daily-digest-report/{reportdate:datetime}", async (context) =>
+    {
+
+        DateTime reportDate = Convert.ToDateTime(context.Request.RouteValues["reportdate"]);
+        await context.Response.WriteAsync($"In Daily-Digest-Report - {reportDate.ToShortDateString()}");
+
+    });
+
+    endpoints.Map("cities/{cityid:guid}", async (context) =>
+    {
+        Guid cityId = Guid.Parse(Convert.ToString
+        (context.Request.RouteValues["cityid"])!);
+        await context.Response.WriteAsync($"City Information - {cityId}");
+    });
+
+    endpoints.Map("sales-report/{year:int:min(1900)}/{month:months}", async (context) =>
+    {
+        int year = Convert.ToInt32(context.Request.RouteValues["year"]);
+
+        string? month = Convert.ToString(context.Request.RouteValues["month"]);
+
+        await context.Response.WriteAsync($"sales report - {year} - {month}");
+
+
+    });
 });
 
 app.Run(async context =>
 {
-    await context.Response.WriteAsync($"Request Received at {context.Request.Path}");
+    await context.Response.WriteAsync($"No Route Matched at {context.Request.Path}");
 });
 
 app.Run();
