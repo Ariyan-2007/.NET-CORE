@@ -6,6 +6,10 @@ builder.Services.AddRouting(options =>
     options.ConstraintMap.Add("months", typeof(MonthsCustomConstraint));
 });
 
+builder.Services.AddTransient<IMyService, MyService>();
+builder.Services.AddScoped<IAnotherService, AnotherService>();
+builder.Services.AddSingleton<ISingletonService, SingletonService>();
+
 var app = builder.Build();
 //Enable Routing
 app.UseRouting();
@@ -20,6 +24,7 @@ app.Use(async (HttpContext context, RequestDelegate next) =>
 //Create Endpoints
 app.UseEndpoints(endpoints =>
 {
+    endpoints.Map("/", (IMyService myService) => myService.GetGreeting());
     endpoints.Map("/home", async (context) =>
     {
         await context.Response.WriteAsync("At Home");
